@@ -13,7 +13,7 @@ this file and include it in basic-server.js so that it actually works.
 
 **************************************************************/
 
-var results = [];
+var results = [{username: 'Jono', text: 'Do my bidding!'}];
 var endpoints = {'/classes/messages': true, '/classes/room': true};
 
 // These headers will allow Cross-Origin Resource Sharing (CORS).
@@ -52,7 +52,6 @@ var requestHandler = function(request, response) {
   var statusCode = 404;
   if (endpoints[URL.parse(request.url).pathname] !== undefined) {
     if (request.method === 'POST') {
-      statusCode = 201;
       let body = '';
       request.on('data', (chunk) => {
         body += chunk;
@@ -61,43 +60,76 @@ var requestHandler = function(request, response) {
         try {
           let requestObj = JSON.parse(body);
           results.push(requestObj);
+          var headers = defaultCorsHeaders;
+          statusCode = 201;
+          headers['Content-Type'] = 'application/json';
+          response.writeHead(statusCode, headers);
+          response.end(JSON.stringify({results: 'Successful POST'}));
         } catch (e) {
           console.log('Parse Failed: ' + e);
+          var headers = defaultCorsHeaders;
+          statusCode = 403;
+          headers['Content-Type'] = 'application/json';
+          response.writeHead(statusCode, headers);
+          response.end(JSON.stringify({results: 'Parse failed: ' + e}));
         }
       });
     } else {
       // The outgoing status.
-      statusCode = 200; 
+      statusCode = 200;
+      // See the note below about CORS headers.
+      var headers = defaultCorsHeaders; 
+      // Tell the client we are sending them plain text.
+      //
+      // You will need to change this if you are sending something
+      // other than plain text, like JSON or HTML.
+      headers['Content-Type'] = 'application/json';
+      // .writeHead() writes to the request line and headers of the response,
+      // which includes the status and all headers.
+      response.writeHead(statusCode, headers);
+      response.end(JSON.stringify({results: results}));
+      //response.end(JSON.stringify({test: "test"}));
     }
   } else {
     statusCode = 404;
+    // See the note below about CORS headers.
+    var headers = defaultCorsHeaders; 
+    // Tell the client we are sending them plain text.
+    //
+    // You will need to change this if you are sending something
+    // other than plain text, like JSON or HTML.
+    headers['Content-Type'] = 'application/json';
+    // .writeHead() writes to the request line and headers of the response,
+    // which includes the status and all headers.
+    response.writeHead(statusCode, headers);
+    response.end(JSON.stringify({results: "Endpoint not found"}));
   }
 
-  // See the note below about CORS headers.
-  var headers = defaultCorsHeaders;
+  // // See the note below about CORS headers.
+  // var headers = defaultCorsHeaders;
 
-  // Tell the client we are sending them plain text.
-  //
-  // You will need to change this if you are sending something
-  // other than plain text, like JSON or HTML.
-  headers['Content-Type'] = 'JSON';
+  // // Tell the client we are sending them plain text.
+  // //
+  // // You will need to change this if you are sending something
+  // // other than plain text, like JSON or HTML.
+  // headers['Content-Type'] = 'JSON';
 
-  // .writeHead() writes to the request line and headers of the response,
-  // which includes the status and all headers.
-  response.writeHead(statusCode, headers);
+  // // .writeHead() writes to the request line and headers of the response,
+  // // which includes the status and all headers.
+  // response.writeHead(statusCode, headers);
 
-  // Make sure to always call response.end() - Node may not send
-  // anything back to the client until you do. The string you pass to
-  // response.end() will be the body of the response - i.e. what shows
-  // up in the browser.
-  //
-  // Calling .end "flushes" the response's internal buffer, forcing
-  // node to actually send all the data over to the client.
-  if (request.method === 'POST') {
-    response.end(JSON.stringify({results: 'Successful POST'}));
-  } else {
-    response.end(JSON.stringify({results: results}));
-  }
+  // // Make sure to always call response.end() - Node may not send
+  // // anything back to the client until you do. The string you pass to
+  // // response.end() will be the body of the response - i.e. what shows
+  // // up in the browser.
+  // //
+  // // Calling .end "flushes" the response's internal buffer, forcing
+  // // node to actually send all the data over to the client.
+  // if (request.method === 'POST') {
+  //   response.end(JSON.stringify({results: 'Successful POST'}));
+  // } else {
+  //   response.end(JSON.stringify({results: results}));
+  // }
   
 };
 
