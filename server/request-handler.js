@@ -1,4 +1,5 @@
 var URL = require('url');
+const querystring = require('querystring');
 /*************************************************************
 
 You should implement your request handler function in this file.
@@ -13,7 +14,8 @@ this file and include it in basic-server.js so that it actually works.
 
 **************************************************************/
 
-var results = [{username: 'Jono', text: 'Do my bidding!'}];
+var results = [{objectId: 1, username: 'Jono', text: 'Do my bidding!'}];
+var nextId = 2;
 var endpoints = {'/classes/messages': true, '/classes/room': true};
 
 // These headers will allow Cross-Origin Resource Sharing (CORS).
@@ -58,7 +60,10 @@ var requestHandler = function(request, response) {
       });
       request.on('end', () => {
         try {
-          let requestObj = JSON.parse(body);
+          let requestObj = querystring.parse(body);
+          requestObj.objectId = nextId;
+          nextId += 1;
+          //let requestObj = JSON.parse(body);
           results.push(requestObj);
           var headers = defaultCorsHeaders;
           statusCode = 201;
