@@ -99,7 +99,7 @@ describe('Node Server Request Listener Function', function() {
     
     expect(messages.length).to.be.above(0);
     expect(messages[0].username).to.equal('Jono');
-    expect(messages[0].message).to.equal('Do my bidding!');
+    expect(messages[0].text).to.equal('Do my bidding!');
     expect(res._ended).to.equal(true);
   });
 

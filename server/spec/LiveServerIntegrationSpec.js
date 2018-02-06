@@ -62,7 +62,7 @@ describe('server', function() {
         console.log('messages: ' + JSON.stringify(body));
         console.log('messages: ' + JSON.stringify(messages));
         expect(messages[0].username).to.equal('Jono');
-        expect(messages[0].message).to.equal('Do my bidding!');
+        expect(messages[0].text).to.equal('Do my bidding!');
         done();
       });
     });
