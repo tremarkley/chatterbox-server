@@ -14,7 +14,7 @@ this file and include it in basic-server.js so that it actually works.
 
 **************************************************************/
 
-var results = [{objectId: 1, username: 'Jono', text: 'Do my bidding!'}];
+var results = [{objectId: 1, username: 'Jono', text: 'Do my bidding!', createdAt: Date.now()}];
 var nextId = 2;
 var endpoints = {'/classes/messages': true, '/classes/room': true};
 
@@ -54,6 +54,7 @@ var requestHandler = function(request, response) {
   var statusCode = 404;
   if (endpoints[URL.parse(request.url).pathname] !== undefined) {
     if (request.method === 'POST') {
+      var currentTime = Date.now();
       let body = '';
       request.on('data', (chunk) => {
         body += chunk;
@@ -62,6 +63,7 @@ var requestHandler = function(request, response) {
         try {
           let requestObj = querystring.parse(body);
           requestObj.objectId = nextId;
+          requestObj.createdAt = currentTime;
           nextId += 1;
           //let requestObj = JSON.parse(body);
           results.push(requestObj);
@@ -82,6 +84,17 @@ var requestHandler = function(request, response) {
     } else {
       // The outgoing status.
       statusCode = 200;
+      //debugger
+      let requestObj = request.url;
+      let re = /(order=-createdAt)/g;
+      let result = requestObj.match(re);
+      var sortedResults = results.slice();
+      if (result !== undefined) {
+        sortedResults.sort(function(a, b) {
+          return a.createdAt - b.createdAt;
+        });
+        console.log('sorted results: ' + JSON.stringify(sortedResults));
+      }
       // See the note below about CORS headers.
       var headers = defaultCorsHeaders; 
       // Tell the client we are sending them plain text.
@@ -92,7 +105,7 @@ var requestHandler = function(request, response) {
       // .writeHead() writes to the request line and headers of the response,
       // which includes the status and all headers.
       response.writeHead(statusCode, headers);
-      response.end(JSON.stringify({results: results}));
+      response.end(JSON.stringify({results: sortedResults}));
       //response.end(JSON.stringify({test: "test"}));
     }
   } else {
