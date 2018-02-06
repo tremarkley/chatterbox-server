@@ -50,7 +50,6 @@ var requestHandler = function(request, response) {
   // console.logs in your code.
   console.log('Serving request type ' + request.method + ' for url ' + request.url);
   var statusCode = 404;
-  //console.log(request.read());
   if (endpoints[URL.parse(request.url).pathname] !== undefined) {
     if (request.method === 'POST') {
       statusCode = 201;
@@ -66,10 +65,6 @@ var requestHandler = function(request, response) {
           console.log('Parse Failed: ' + e);
         }
       });
-      
-      // let requestObj = JSON.parse(body);
-      // results.push(requestObj);
-      //results.push(body);
     } else {
       // The outgoing status.
       statusCode = 200; 
@@ -98,7 +93,12 @@ var requestHandler = function(request, response) {
   //
   // Calling .end "flushes" the response's internal buffer, forcing
   // node to actually send all the data over to the client.
-  response.end(JSON.stringify({results: results}));
+  if (request.method === 'POST') {
+    response.end(JSON.stringify({results: 'Successful POST'}));
+  } else {
+    response.end(JSON.stringify({results: results}));
+  }
+  
 };
 
 
