@@ -14,8 +14,8 @@ this file and include it in basic-server.js so that it actually works.
 
 **************************************************************/
 
-var results = [{objectId: 1, username: 'Jono', text: 'Do my bidding!', createdAt: Date.now()}];
-var nextId = 2;
+var results = [{objectId: 1, roomname: 'lobby', username: 'Jono', text: 'Do my bidding!', createdAt: Date.now() - 20}, {objectId: 2, roomname: 'lobby', username: 'Joe', text: 'Do my testing!', createdAt: Date.now()}];
+var nextId = 3;
 var endpoints = {'/classes/messages': true, '/classes/room': true};
 
 // These headers will allow Cross-Origin Resource Sharing (CORS).
@@ -62,6 +62,7 @@ var requestHandler = function(request, response) {
       request.on('end', () => {
         try {
           let requestObj = querystring.parse(body);
+          console.log('request Obj: ', JSON.stringify(requestObj), 'body: ', JSON.stringify(body));
           requestObj.objectId = nextId;
           requestObj.createdAt = currentTime;
           nextId += 1;
@@ -85,15 +86,30 @@ var requestHandler = function(request, response) {
       // The outgoing status.
       statusCode = 200;
       //debugger
+      var returnedResults = results;
       let requestObj = request.url;
-      let re = /(order=-createdAt)/g;
-      let result = requestObj.match(re);
-      var sortedResults = results.slice();
-      if (result !== undefined) {
+      let re = /order=-\w+/g;
+      let result = requestObj.match(re)[0];
+      if (result !== undefined && result !== null) {
+        console.log('result ' + result);
+        console.log('is string: ' + typeof result === 'string');
+        let orderBy = result.split('=')[1]; //-createdAt
+        console.log('orderBy ' + orderBy);
+        let isAscending = false;
+        if (orderBy[0] === '-') {
+          isAscending = true;
+          orderBy = orderBy.slice(1);
+        }
+        var sortedResults = results.slice();
         sortedResults.sort(function(a, b) {
-          return a.createdAt - b.createdAt;
+          if (isAscending) {
+            return a.orderBy - b.orderBy;
+          } else {
+            return b.orderBy - a.orderBy;
+          }
         });
         console.log('sorted results: ' + JSON.stringify(sortedResults));
+        returnedResults = sortedResults;
       }
       // See the note below about CORS headers.
       var headers = defaultCorsHeaders; 
@@ -105,7 +121,7 @@ var requestHandler = function(request, response) {
       // .writeHead() writes to the request line and headers of the response,
       // which includes the status and all headers.
       response.writeHead(statusCode, headers);
-      response.end(JSON.stringify({results: sortedResults}));
+      response.end(JSON.stringify({results: returnedResults}));
       //response.end(JSON.stringify({test: "test"}));
     }
   } else {

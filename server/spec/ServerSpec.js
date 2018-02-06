@@ -1,6 +1,7 @@
 var handler = require('../request-handler');
 var expect = require('chai').expect;
 var stubs = require('./Stubs');
+const querystring = require('querystring');
 
 // Conditional async testing, akin to Jasmine's waitsFor()
 // Will wait for test to be truthy before executing callback
@@ -117,5 +118,17 @@ describe('Node Server Request Listener Function', function() {
         expect(res._responseCode).to.equal(404);
       });
   });
+
+  it('Should return results in ascending order by date when order=-createdAt is specified', function() {
+
+    req = new stubs.request('/classes/messages?order=-createdAt', 'GET');
+    res = new stubs.response();
+
+    handler.requestHandler(req, res);
+    var messages = JSON.parse(res._data).results
+    console.log('MESSAGES ' + messages);
+    expect(messages[0].username).to.equal('Jono');
+    expect(messages[1].username).to.equal('Joe');
+  })
 
 });
