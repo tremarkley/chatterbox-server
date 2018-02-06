@@ -57,7 +57,7 @@ describe('Node Server Request Listener Function', function() {
     expect(res._ended).to.equal(true);
   });
 
-  it('Should accept posts to /classes/room', function() {
+  xit('Should accept posts to /classes/room', function() {
     var stubMsg = {
       username: 'Jono',
       message: 'Do my bidding!'
@@ -77,7 +77,7 @@ describe('Node Server Request Listener Function', function() {
     expect(res._ended).to.equal(true);
   });
 
-  it('Should respond with messages that were previously posted', function() {
+  xit('Should respond with messages that were previously posted', function() {
     var stubMsg = {
       username: 'Jono',
       message: 'Do my bidding!'
@@ -127,8 +127,22 @@ describe('Node Server Request Listener Function', function() {
     handler.requestHandler(req, res);
     var messages = JSON.parse(res._data).results
     console.log('MESSAGES ' + messages);
-    expect(messages[0].username).to.equal('Jono');
+    expect(messages[0].username).to.equal('George');
+    expect(messages[1].username).to.equal('Jono');
+    expect(messages[2].username).to.equal('Joe');
+  })
+
+  it('Should return results in descending order by name when order=username is specified', function() {
+
+    req = new stubs.request('/classes/messages?order=username', 'GET');
+    res = new stubs.response();
+
+    handler.requestHandler(req, res);
+    var messages = JSON.parse(res._data).results
+    console.log('MESSAGES ' + JSON.stringify(messages));
+    expect(messages[0].username).to.equal('George');
     expect(messages[1].username).to.equal('Joe');
+    expect(messages[2].username).to.equal('Jono');
   })
 
 });

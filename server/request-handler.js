@@ -14,7 +14,9 @@ this file and include it in basic-server.js so that it actually works.
 
 **************************************************************/
 
-var results = [{objectId: 1, roomname: 'lobby', username: 'Jono', text: 'Do my bidding!', createdAt: Date.now() - 20}, {objectId: 2, roomname: 'lobby', username: 'Joe', text: 'Do my testing!', createdAt: Date.now()}];
+var results = [{objectId: 1, roomname: 'lobby', username: 'Jono', text: 'Do my bidding!', createdAt: Date.now() - 20}, 
+                {objectId: 2, roomname: 'lobby', username: 'Joe', text: 'Do my testing!', createdAt: Date.now()},
+                {objectId: 2, roomname: 'lobby', username: 'George', text: 'Node is dope!', createdAt: Date.now() - 50}];
 var nextId = 3;
 var endpoints = {'/classes/messages': true, '/classes/room': true};
 
@@ -88,25 +90,53 @@ var requestHandler = function(request, response) {
       //debugger
       var returnedResults = results;
       let requestObj = request.url;
-      let re = /order=-\w+/g;
-      let result = requestObj.match(re)[0];
+      let re = /order=-?\w+/g;
+      let result = requestObj.match(re);
       if (result !== undefined && result !== null) {
+        result = requestObj.match(re)[0];
         console.log('result ' + result);
         console.log('is string: ' + typeof result === 'string');
         let orderBy = result.split('=')[1]; //-createdAt
         console.log('orderBy ' + orderBy);
+        console.log('orderBy[0]: ' + orderBy[0]);
         let isAscending = false;
         if (orderBy[0] === '-') {
           isAscending = true;
           orderBy = orderBy.slice(1);
+          console.log('orderby slice: ' + orderBy);
         }
         var sortedResults = results.slice();
         sortedResults.sort(function(a, b) {
-          if (isAscending) {
-            return a.orderBy - b.orderBy;
-          } else {
-            return b.orderBy - a.orderBy;
+          console.log('a: ' + JSON.stringify(a));
+          console.log('orderBy: ' + orderBy);
+          console.log(typeof orderBy);
+          console.log('a.orderBy: ' + a[orderBy])
+          if (typeof a[orderBy] === 'number') {
+            console.log('ordering by number')
+              if (isAscending) {
+                return a[orderBy] - b[orderBy];
+              } else {
+                return b[orderBy] - a[orderBy];
+              }
+          } else if (typeof a[orderBy] === 'string'){
+            console.log('ordering by string')
+            if (!isAscending) {
+              var nameA = a[orderBy].toUpperCase(); // ignore upper and lowercase
+              var nameB = b[orderBy].toUpperCase(); // ignore upper and lowercase
+            } else {
+              var nameA = b[orderBy].toUpperCase(); // ignore upper and lowercase
+              var nameB = a[orderBy].toUpperCase(); // ignore upper and lowercase
+            }
+            if (nameA < nameB) {
+              return -1;
+            }
+            if (nameA > nameB) {
+              return 1;
+            }
+            // names must be equal
+            return 0;
           }
+          
         });
         console.log('sorted results: ' + JSON.stringify(sortedResults));
         returnedResults = sortedResults;
