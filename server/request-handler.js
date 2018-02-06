@@ -14,7 +14,24 @@ this file and include it in basic-server.js so that it actually works.
 **************************************************************/
 
 var results = [];
-var endpoints = {'/classes/messages': true, '/classes/room': true}
+var endpoints = {'/classes/messages': true, '/classes/room': true};
+
+// These headers will allow Cross-Origin Resource Sharing (CORS).
+// This code allows this server to talk to websites that
+// are on different domains, for instance, your chat client.
+//
+// Your chat client is running from a url like file://your/chat/client/index.html,
+// which is considered a different domain.
+//
+// Another way to get around this restriction is to serve you chat
+// client from this domain by setting up static file serving.
+var defaultCorsHeaders = {
+  'access-control-allow-origin': '*',
+  'access-control-allow-methods': 'GET, POST, PUT, DELETE, OPTIONS',
+  'access-control-allow-headers': 'content-type, accept',
+  'access-control-max-age': 10 // Seconds.
+};
+
 
 var requestHandler = function(request, response) {
   // Request and Response come from node's http module.
@@ -32,35 +49,34 @@ var requestHandler = function(request, response) {
   // debugging help, but you should always be careful about leaving stray
   // console.logs in your code.
   console.log('Serving request type ' + request.method + ' for url ' + request.url);
-  // const url = new URL(request.url);
-  console.log('path: ' + URL.parse(request.url).pathname);
-  console.log(endpoints[URL.parse(request.url).pathname] !== undefined);
-
+  var statusCode = 404;
   //console.log(request.read());
   if (endpoints[URL.parse(request.url).pathname] !== undefined) {
     if (request.method === 'POST') {
-      var statusCode = 201;
-      let body = [];
+      statusCode = 201;
+      let body = '';
       request.on('data', (chunk) => {
-        body.push(chunk);
-      }).on('end', () => {
-      body = Buffer.concat(body).toString();
-      let requestObj = JSON.parse(body);
-      results.push(requestObj);
-      // at this point, `body` has the entire request body stored in it as a string
-      console.log('body: ' + body);
+        body += chunk;
       });
+      request.on('end', () => {
+        try {
+          let requestObj = JSON.parse(body);
+          results.push(requestObj);
+        } catch (e) {
+          console.log('Parse Failed: ' + e);
+        }
+      });
+      
+      // let requestObj = JSON.parse(body);
+      // results.push(requestObj);
+      //results.push(body);
     } else {
-        // The outgoing status.
-      var statusCode = 200; 
+      // The outgoing status.
+      statusCode = 200; 
     }
   } else {
-    var statusCode = 404;
+    statusCode = 404;
   }
-
-
-
-  
 
   // See the note below about CORS headers.
   var headers = defaultCorsHeaders;
@@ -82,25 +98,9 @@ var requestHandler = function(request, response) {
   //
   // Calling .end "flushes" the response's internal buffer, forcing
   // node to actually send all the data over to the client.
-  console.log('results ' + JSON.stringify(results));
   response.end(JSON.stringify({results: results}));
 };
 
-// These headers will allow Cross-Origin Resource Sharing (CORS).
-// This code allows this server to talk to websites that
-// are on different domains, for instance, your chat client.
-//
-// Your chat client is running from a url like file://your/chat/client/index.html,
-// which is considered a different domain.
-//
-// Another way to get around this restriction is to serve you chat
-// client from this domain by setting up static file serving.
-var defaultCorsHeaders = {
-  'access-control-allow-origin': '*',
-  'access-control-allow-methods': 'GET, POST, PUT, DELETE, OPTIONS',
-  'access-control-allow-headers': 'content-type, accept',
-  'access-control-max-age': 10 // Seconds.
-};
 
 exports.requestHandler = requestHandler;
 
