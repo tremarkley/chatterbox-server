@@ -145,4 +145,17 @@ describe('Node Server Request Listener Function', function() {
     expect(messages[2].username).to.equal('Jono');
   })
 
+  it('Should return results in descending order by name when order=username is specified', function() {
+
+    req = new stubs.request('/classes/messages?order=-username', 'GET');
+    res = new stubs.response();
+
+    handler.requestHandler(req, res);
+    var messages = JSON.parse(res._data).results
+    console.log('MESSAGES ' + JSON.stringify(messages));
+    expect(messages[2].username).to.equal('George');
+    expect(messages[1].username).to.equal('Joe');
+    expect(messages[0].username).to.equal('Jono');
+  })
+
 });
